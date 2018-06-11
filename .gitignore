@@ -1,1 +1,6 @@
 *~
+*.wxs
+*.wixobj
+*.wixpdb
+*.msi
+

@@ -14,13 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys, os, subprocess, shutil, uuid
+import sys, os, subprocess, shutil, uuid, json
 from glob import glob
 import platform
 import xml.etree.ElementTree as ET
 
 sys.path.append(os.getcwd())
-from mesonbuild import coredata
 
 def gen_guid():
     return str(uuid.uuid4()).upper()
@@ -34,20 +33,25 @@ class Node:
 
 class PackageGenerator:
 
-    def __init__(self):
-        self.product_name = 'Meson Build System'
-        self.manufacturer = 'The Meson Development Team'
-        self.version = coredata.version.replace('dev', '')
+    def __init__(self, jsonfile):
+        jsondata = json.load(open(jsonfile, 'rb'))
+        self.product_name = jsondata['product_name']
+        self.manufacturer = jsondata['manufacturer']
+        self.version = jsondata['version']
+        self.comments = jsondata['comments']
+        self.installdir = jsondata['installdir']
+        self.license_file = jsondata['license_file']
+        self.name = jsondata['name']
         self.guid = '*'
-        self.update_guid = '141527EE-E28A-4D14-97A4-92E6075D28B2'
-        self.main_xml = 'meson.wxs'
-        self.main_o = 'meson.wixobj'
+        self.update_guid = jsondata['update_guid']
+        self.basename = jsondata['name_base']
+        self.main_xml = self.basename + '.wxs'
+        self.main_o = self.basename + '.wixobj'
         self.bytesize = 32 if '32' in platform.architecture()[0] else 64
         # rely on the environment variable since python architecture may not be the same as system architecture
         if 'PROGRAMFILES(X86)' in os.environ:
             self.bytesize = 64
-        self.final_output = 'meson-%s-%d.msi' % (self.version, self.bytesize)
-        self.staging_dirs = ['dist', 'dist2']
+        self.final_output = '%s-%s-%d.msi' % (self.basename, self.version, self.bytesize)
         if self.bytesize == 64:
             self.progfile_dir = 'ProgramFiles64Folder'
             redist_glob = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x64.msm'
@@ -59,58 +63,25 @@ class PackageGenerator:
             sys.exit('There are more than one potential redist dirs.')
         self.redist_path = trials[0]
         self.component_num = 0
-        self.feature_properties = {
-            self.staging_dirs[0]: {
-                'Id': 'MainProgram',
-                'Title': 'Meson',
-                'Description': 'Meson executables',
-                'Level': '1',
-                'Absent': 'disallow',
-            },
-            self.staging_dirs[1]: {
-                'Id': 'NinjaProgram',
-                'Title': 'Ninja',
-                'Description': 'Ninja build tool',
-                'Level': '1',
+        self.parts = jsondata['parts']
+        self.feature_components = {}
+        self.feature_components['main'] = []
+        tmphack = self.parts[0]
+#        for sd in self.staging_dirs:
+#            self.feature_components[sd] = []
+        self.feature_properties = {'main': {
+            'Id': tmphack['id'],
+            'Title': tmphack['title'],
+            'Description': tmphack['description'],
+            'Level': '1'
             }
         }
-        self.feature_components = {}
-        for sd in self.staging_dirs:
-            self.feature_components[sd] = []
-
-    def build_dist(self):
-        for sdir in self.staging_dirs:
-            if os.path.exists(sdir):
-                shutil.rmtree(sdir)
-        main_stage, ninja_stage = self.staging_dirs
-        modules = [os.path.splitext(os.path.split(x)[1])[0] for x in glob(os.path.join('mesonbuild/modules/*'))]
-        modules = ['mesonbuild.modules.' + x for x in modules if not x.startswith('_')]
-        modulestr = ','.join(modules)
-        python = shutil.which('python')
-        cxfreeze = os.path.join(os.path.dirname(python), "Scripts", "cxfreeze")
-        if not os.path.isfile(cxfreeze):
-            print("ERROR: This script requires cx_freeze module")
-            sys.exit(1)
-
-        subprocess.check_call([python,
-                               cxfreeze,
-                               '--target-dir',
-                               main_stage,
-                               '--include-modules',
-                               modulestr,
-                               'meson.py'])
-        if not os.path.exists(os.path.join(main_stage, 'meson.exe')):
-            sys.exit('Meson exe missing from staging dir.')
-        os.mkdir(ninja_stage)
-        shutil.copy(shutil.which('ninja'), ninja_stage)
-        if not os.path.exists(os.path.join(ninja_stage, 'ninja.exe')):
-            sys.exit('Ninja exe missing from staging dir.')
 
     def generate_files(self):
         self.root = ET.Element('Wix', {'xmlns': 'http://schemas.microsoft.com/wix/2006/wi'})
         product = ET.SubElement(self.root, 'Product', {
             'Name': self.product_name,
-            'Manufacturer': 'The Meson Development Team',
+            'Manufacturer': self.manufacturer,
             'Id': self.guid,
             'UpgradeCode': self.update_guid,
             'Language': '1033',
@@ -121,9 +92,9 @@ class PackageGenerator:
         package = ET.SubElement(product, 'Package',  {
             'Id': '*',
             'Keywords': 'Installer',
-            'Description': 'Meson %s installer' % self.version,
-            'Comments': 'Meson is a high performance build system',
-            'Manufacturer': 'The Meson Development Team',
+            'Description': '%s %s installer' % (self.name, self.version),
+            'Comments': self.comments,
+            'Manufacturer': self.manufacturer,
             'InstallerVersion': '500',
             'Languages': '1033',
             'Compressed': 'yes',
@@ -134,7 +105,7 @@ class PackageGenerator:
             package.set('Platform', 'x64')
         ET.SubElement(product, 'Media', {
             'Id': '1',
-            'Cabinet': 'meson.cab',
+            'Cabinet': self.basename + '.cab',
             'EmbedCab': 'yes',
         })
         targetdir = ET.SubElement(product, 'Directory', {
@@ -146,14 +117,14 @@ class PackageGenerator:
         })
         installdir = ET.SubElement(progfiledir, 'Directory', {
             'Id': 'INSTALLDIR',
-            'Name': 'Meson',
+            'Name': self.installdir,
         })
-        ET.SubElement(installdir, 'Merge', {
-            'Id': 'VCRedist',
-            'SourceFile': self.redist_path,
-            'DiskId': '1',
-            'Language': '0',
-        })
+#        ET.SubElement(installdir, 'Merge', {
+#            'Id': 'VCRedist',
+#            'SourceFile': self.redist_path,
+#            'DiskId': '1',
+#            'Language': '0',
+#        })
 
         ET.SubElement(product, 'Property', {
             'Id': 'WIXUI_INSTALLDIR',
@@ -162,31 +133,34 @@ class PackageGenerator:
         ET.SubElement(product, 'UIRef', {
             'Id': 'WixUI_FeatureTree',
         })
-        for sd in self.staging_dirs:
-            assert(os.path.isdir(sd))
+#        for sd in self.staging_dirs:
+#            assert(os.path.isdir(sd))
+        feature = self.parts[0]
         top_feature = ET.SubElement(product, 'Feature', {
             'Id': 'Complete',
-            'Title': 'Meson ' + self.version,
+            'Title': self.name + ' ' + self.version,
             'Description': 'The complete package',
             'Display': 'expand',
             'Level': '1',
             'ConfigurableDirectory': 'INSTALLDIR',
         })
-        for sd in self.staging_dirs:
+        for sd in [feature['staged_dir']]:
+            if '/' in sd or '\\' in sd:
+                sys.exit('Staged_dir %s must not have a path segment.' % sd)
             nodes = {}
             for root, dirs, files in os.walk(sd):
                 cur_node = Node(dirs, files)
                 nodes[root] = cur_node
             self.create_xml(nodes, sd, installdir, sd)
             self.build_features(nodes, top_feature, sd)
-        vcredist_feature = ET.SubElement(top_feature, 'Feature', {
-            'Id': 'VCRedist',
-            'Title': 'Visual C++ runtime',
-            'AllowAdvertise': 'no',
-            'Display': 'hidden',
-            'Level': '1',
-        })
-        ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
+#        vcredist_feature = ET.SubElement(top_feature, 'Feature', {
+#            'Id': 'VCRedist',
+#            'Title': 'Visual C++ runtime',
+#            'AllowAdvertise': 'no',
+#            'Display': 'hidden',
+#            'Level': '1',
+#        })
+#        ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually
         import xml.dom.minidom
@@ -249,16 +223,16 @@ class PackageGenerator:
         subprocess.check_call([os.path.join(wixdir, 'light'),
                                '-ext', 'WixUIExtension',
                                '-cultures:en-us',
-                               '-dWixUILicenseRtf=msi\\License.rtf',
+                               '-dWixUILicenseRtf=' + self.license_file,
                                '-out', self.final_output,
                                self.main_o])
 
 if __name__ == '__main__':
-    if not os.path.exists('meson.py'):
-        sys.exit(print('Run me in the top level source dir.'))
-    subprocess.check_call(['pip', 'install', '--upgrade', 'cx_freeze'])
-
-    p = PackageGenerator()
-    p.build_dist()
+    if len(sys.argv) != 2:
+        sys.exit(sys.argv[0] + ' <msi definition json>')
+    jsonfile = sys.argv[1]
+    if '/' in jsonfile or '\\' in jsonfile:
+        sys.exit('Input file %s must not contain a path segment.' % jsonfile)
+    p = PackageGenerator(jsonfile)
     p.generate_files()
     p.build_package()

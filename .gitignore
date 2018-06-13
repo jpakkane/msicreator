@@ -3,4 +3,5 @@
 *.wixobj
 *.wixpdb
 *.msi
+__pycache__
 

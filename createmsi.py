@@ -227,12 +227,15 @@ class PackageGenerator:
                                '-out', self.final_output,
                                self.main_o])
 
-if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        sys.exit(sys.argv[0] + ' <msi definition json>')
-    jsonfile = sys.argv[1]
+def run(args):
+    if len(sys.argv) != 1:
+        sys.exit('createmsi.py <msi definition json>')
+    jsonfile = args[0]
     if '/' in jsonfile or '\\' in jsonfile:
         sys.exit('Input file %s must not contain a path segment.' % jsonfile)
     p = PackageGenerator(jsonfile)
     p.generate_files()
     p.build_package()
+
+if __name__ == '__main__':
+    run(sys.argv[1:])

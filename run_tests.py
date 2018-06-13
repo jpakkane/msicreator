@@ -18,7 +18,9 @@ import os
 import createmsi
 
 if __name__ == '__main__':
-    testdirs = [('basictest', 'msidef.json')]
+    testdirs = [('basictest', 'msidef.json'),
+                ('two_items', 'two.json'),
+    ]
     for d in testdirs:
         os.chdir(d[0])
         createmsi.run([d[1]])

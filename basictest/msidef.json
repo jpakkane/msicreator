@@ -7,7 +7,7 @@
     "name_base": "simplebat",
     "comments": "This is a BAT of the ages",
     "installdir": "batdir",
-    "license_file": "License.rtf",
+    "license_file": "../License.rtf",
     "parts": [
         {"id": "MainProgram",
          "title": "The Bat",

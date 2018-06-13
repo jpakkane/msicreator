@@ -65,7 +65,6 @@ class PackageGenerator:
         self.component_num = 0
         self.parts = jsondata['parts']
         self.feature_components = {}
-        self.feature_components['main'] = []
         self.feature_properties = {}
 
     def generate_files(self):
@@ -125,8 +124,17 @@ class PackageGenerator:
             'Id': 'WixUI_FeatureTree',
         })
 
+        top_feature = ET.SubElement(product, 'Feature', {
+            'Id': 'Complete',
+            'Title': self.name + ' ' + self.version,
+            'Description': 'The complete package',
+            'Display': 'expand',
+            'Level': '1',
+            'ConfigurableDirectory': 'INSTALLDIR',
+        })
+
         for f in self.parts:
-            self.scan_feature(product, installdir, f)
+            self.scan_feature(top_feature, installdir, 1, f)
 
 #        vcredist_feature = ET.SubElement(top_feature, 'Feature', {
 #            'Id': 'VCRedist',
@@ -143,15 +151,7 @@ class PackageGenerator:
         with open(self.main_xml, 'w') as of:
             of.write(doc.toprettyxml())
 
-    def scan_feature(self, product, installdir, depth, feature):
-        top_feature = ET.SubElement(product, 'Feature', {
-            'Id': 'Complete',
-            'Title': self.name + ' ' + self.version,
-            'Description': 'The complete package',
-            'Display': 'expand',
-            'Level': '1',
-            'ConfigurableDirectory': 'INSTALLDIR',
-        })
+    def scan_feature(self, top_feature, installdir, depth, feature):
         for sd in [feature['staged_dir']]:
             if '/' in sd or '\\' in sd:
                 sys.exit('Staged_dir %s must not have a path segment.' % sd)
@@ -159,13 +159,17 @@ class PackageGenerator:
             for root, dirs, files in os.walk(sd):
                 cur_node = Node(dirs, files)
                 nodes[root] = cur_node
-            self.feature_properties['main'] = {
+            fdict = {
                 'Id': feature['id'],
                 'Title': feature['title'],
                 'Description': feature['description'],
                 'Level': '1'
             }
+            if feature.get('absent', 'ab') == 'disallow':
+                fdict['Absent'] = 'disallow'
+            self.feature_properties[sd] = fdict
 
+            self.feature_components[sd] = []
             self.create_xml(nodes, sd, installdir, sd)
             self.build_features(nodes, top_feature, sd)
 
@@ -229,7 +233,7 @@ class PackageGenerator:
                                self.main_o])
 
 def run(args):
-    if len(sys.argv) != 1:
+    if len(args) != 1:
         sys.exit('createmsi.py <msi definition json>')
     jsonfile = args[0]
     if '/' in jsonfile or '\\' in jsonfile:

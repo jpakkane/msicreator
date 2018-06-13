@@ -66,16 +66,7 @@ class PackageGenerator:
         self.parts = jsondata['parts']
         self.feature_components = {}
         self.feature_components['main'] = []
-        tmphack = self.parts[0]
-#        for sd in self.staging_dirs:
-#            self.feature_components[sd] = []
-        self.feature_properties = {'main': {
-            'Id': tmphack['id'],
-            'Title': tmphack['title'],
-            'Description': tmphack['description'],
-            'Level': '1'
-            }
-        }
+        self.feature_properties = {}
 
     def generate_files(self):
         self.root = ET.Element('Wix', {'xmlns': 'http://schemas.microsoft.com/wix/2006/wi'})
@@ -133,9 +124,26 @@ class PackageGenerator:
         ET.SubElement(product, 'UIRef', {
             'Id': 'WixUI_FeatureTree',
         })
-#        for sd in self.staging_dirs:
-#            assert(os.path.isdir(sd))
-        feature = self.parts[0]
+
+        for f in self.parts:
+            self.scan_feature(product, installdir, f)
+
+#        vcredist_feature = ET.SubElement(top_feature, 'Feature', {
+#            'Id': 'VCRedist',
+#            'Title': 'Visual C++ runtime',
+#            'AllowAdvertise': 'no',
+#            'Display': 'hidden',
+#            'Level': '1',
+#        })
+#        ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
+        ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
+        # ElementTree can not do prettyprinting so do it manually
+        import xml.dom.minidom
+        doc = xml.dom.minidom.parse(self.main_xml)
+        with open(self.main_xml, 'w') as of:
+            of.write(doc.toprettyxml())
+
+    def scan_feature(self, product, installdir, depth, feature):
         top_feature = ET.SubElement(product, 'Feature', {
             'Id': 'Complete',
             'Title': self.name + ' ' + self.version,
@@ -151,22 +159,15 @@ class PackageGenerator:
             for root, dirs, files in os.walk(sd):
                 cur_node = Node(dirs, files)
                 nodes[root] = cur_node
+            self.feature_properties['main'] = {
+                'Id': feature['id'],
+                'Title': feature['title'],
+                'Description': feature['description'],
+                'Level': '1'
+            }
+
             self.create_xml(nodes, sd, installdir, sd)
             self.build_features(nodes, top_feature, sd)
-#        vcredist_feature = ET.SubElement(top_feature, 'Feature', {
-#            'Id': 'VCRedist',
-#            'Title': 'Visual C++ runtime',
-#            'AllowAdvertise': 'no',
-#            'Display': 'hidden',
-#            'Level': '1',
-#        })
-#        ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
-        ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
-        # ElementTree can not do prettyprinting so do it manually
-        import xml.dom.minidom
-        doc = xml.dom.minidom.parse(self.main_xml)
-        with open(self.main_xml, 'w') as of:
-            of.write(doc.toprettyxml())
 
     def build_features(self, nodes, top_feature, staging_dir):
         feature = ET.SubElement(top_feature, 'Feature',  self.feature_properties[staging_dir])

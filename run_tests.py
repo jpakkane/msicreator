@@ -14,13 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
+import os, subprocess
 import createmsi
+
+def build_binaries():
+    msvcrt_file = 'msvcrt/program.cpp'
+    msvcrt_staging_dir = 'msvcrt/main'
+    msvcrt_binary_out = 'msvcrt/main/program.exe'
+    if not os.path.exists(msvcrt_staging_dir):
+        os.mkdir(msvcrt_staging_dir)
+    subprocess.check_call(['cl', '/O2', '/MD', '/EHsc', msvcrt_file, '/Fe' + msvcrt_binary_out])
+    os.unlink('program.obj')
 
 if __name__ == '__main__':
     testdirs = [('basictest', 'msidef.json'),
                 ('two_items', 'two.json'),
+                ('msvcrt', 'msvcrt.json'),
     ]
+
+    build_binaries()
     for d in testdirs:
         os.chdir(d[0])
         createmsi.run([d[1]])

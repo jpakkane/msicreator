@@ -45,6 +45,7 @@ class PackageGenerator:
         self.guid = '*'
         self.update_guid = jsondata['update_guid']
         self.basename = jsondata['name_base']
+        self.need_msvcrt = jsondata.get('need_msvcrt', False)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         self.bytesize = 32 if '32' in platform.architecture()[0] else 64
@@ -109,12 +110,13 @@ class PackageGenerator:
             'Id': 'INSTALLDIR',
             'Name': self.installdir,
         })
-#        ET.SubElement(installdir, 'Merge', {
-#            'Id': 'VCRedist',
-#            'SourceFile': self.redist_path,
-#            'DiskId': '1',
-#            'Language': '0',
-#        })
+        if self.need_msvcrt:
+            ET.SubElement(installdir, 'Merge', {
+                'Id': 'VCRedist',
+                'SourceFile': self.redist_path,
+                'DiskId': '1',
+                'Language': '0',
+            })
 
         ET.SubElement(product, 'Property', {
             'Id': 'WIXUI_INSTALLDIR',
@@ -136,14 +138,15 @@ class PackageGenerator:
         for f in self.parts:
             self.scan_feature(top_feature, installdir, 1, f)
 
-#        vcredist_feature = ET.SubElement(top_feature, 'Feature', {
-#            'Id': 'VCRedist',
-#            'Title': 'Visual C++ runtime',
-#            'AllowAdvertise': 'no',
-#            'Display': 'hidden',
-#            'Level': '1',
-#        })
-#        ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
+        if self.need_msvcrt:
+            vcredist_feature = ET.SubElement(top_feature, 'Feature', {
+                'Id': 'VCRedist',
+                'Title': 'Visual C++ runtime',
+                'AllowAdvertise': 'no',
+                'Display': 'hidden',
+                'Level': '1',
+            })
+            ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually
         import xml.dom.minidom

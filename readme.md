@@ -100,3 +100,7 @@ c:\program files\foo\foo.h
 ```
 
 Note how the files end up in the same directory.
+
+## Screenshot
+
+![Screen shot of installer](https://raw.githubusercontent.com/jpakkane/msicreator/master/installer_sshot.png)

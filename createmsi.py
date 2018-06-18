@@ -46,23 +46,34 @@ class PackageGenerator:
         self.update_guid = jsondata['update_guid']
         self.basename = jsondata['name_base']
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
+        self.arch = jsondata['arch']
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         self.bytesize = 32 if '32' in platform.architecture()[0] else 64
         # rely on the environment variable since python architecture may not be the same as system architecture
         if 'PROGRAMFILES(X86)' in os.environ:
             self.bytesize = 64
+        if self.arch == 32:
+            self.bytesize = 32
+        else:
+           self.bytesize = 64
         self.final_output = '%s-%s-%d.msi' % (self.basename, self.version, self.bytesize)
         if self.bytesize == 64:
             self.progfile_dir = 'ProgramFiles64Folder'
-            redist_glob = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x64.msm'
+            if platform.system() == "Windows":
+                redist_glob = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x64.msm'
+            else:
+                redist_glob = '/usr/share/msicreator/Microsoft_VC141_CRT_x64.msm'
         else:
             self.progfile_dir = 'ProgramFilesFolder'
-            redist_glob = 'C:\\Program Files\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x86.msm'
+            if platform.system() == "Windows":
+                redist_glob = 'C:\\Program Files\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x86.msm'
+            else:
+                redist_glob = '/usr/share/msicreator/Microsoft_VC141_CRT_x86.msm'
         trials = glob(redist_glob)
-        if len(trials) != 1:
+        if self.need_msvcrt and len(trials) != 1:
             sys.exit('There are more than one potential redist dirs.')
-        self.redist_path = trials[0]
+            self.redist_path = trials[0]
         self.component_num = 0
         self.parts = jsondata['parts']
         self.feature_components = {}
@@ -122,9 +133,10 @@ class PackageGenerator:
             'Id': 'WIXUI_INSTALLDIR',
             'Value': 'INSTALLDIR',
         })
-        ET.SubElement(product, 'UIRef', {
-            'Id': 'WixUI_FeatureTree',
-        })
+        if platform.system() == "Windows":
+            ET.SubElement(product, 'UIRef', {
+                'Id': 'WixUI_FeatureTree',
+            })
 
         top_feature = ET.SubElement(product, 'Feature', {
             'Id': 'Complete',
@@ -194,7 +206,7 @@ class PackageGenerator:
             self.feature_components[staging_dir].append(component_id)
             if self.bytesize == 64:
                 comp_xml_node.set('Win64', 'yes')
-            if self.component_num == 0:
+            if platform.system() == "Windows" and self.component_num == 0:
                 ET.SubElement(comp_xml_node, 'Environment', {
                     'Id': 'Environment',
                     'Name': 'PATH',
@@ -205,7 +217,7 @@ class PackageGenerator:
                 })
             self.component_num += 1
             for f in cur_node.files:
-                file_id = os.path.join(current_dir, f).replace('\\', '_').replace('#', '_').replace('-', '_')
+                file_id = os.path.join(current_dir, f).replace('\\', '_').replace('/', '_').replace('#', '_').replace('-', '_')
                 ET.SubElement(comp_xml_node, 'File', {
                     'Id': file_id,
                     'Name': f,
@@ -222,18 +234,23 @@ class PackageGenerator:
 
     def build_package(self):
         wixdir = 'c:\\Program Files\\Wix Toolset v3.11\\bin'
+        if platform.system() != "Windows":
+            wixdir = '/usr/bin'
         if not os.path.isdir(wixdir):
             wixdir = 'c:\\Program Files (x86)\\Wix Toolset v3.11\\bin'
         if not os.path.isdir(wixdir):
             print("ERROR: This script requires WIX")
             sys.exit(1)
-        subprocess.check_call([os.path.join(wixdir, 'candle'), self.main_xml])
-        subprocess.check_call([os.path.join(wixdir, 'light'),
-                               '-ext', 'WixUIExtension',
-                               '-cultures:en-us',
-                               '-dWixUILicenseRtf=' + self.license_file,
-                               '-out', self.final_output,
-                               self.main_o])
+        if platform.system() == "Windows":
+            subprocess.check_call([os.path.join(wixdir, 'candle'), self.main_xml])
+            subprocess.check_call([os.path.join(wixdir, 'light'),
+                                   '-ext', 'WixUIExtension',
+                                   '-cultures:en-us',
+                                   '-dWixUILicenseRtf=' + self.license_file,
+                                   '-out', self.final_output,
+                                   self.main_o])
+        else:
+            subprocess.check_call([os.path.join(wixdir, 'wixl'), '-o', self.final_output, self.main_xml])
 
 def run(args):
     if len(args) != 1:

@@ -46,7 +46,7 @@ class PackageGenerator:
         self.update_guid = jsondata['update_guid']
         self.basename = jsondata['name_base']
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
-        self.arch = jsondata['arch']
+        self.arch = jsondata.get('arch', 0)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         self.bytesize = 32 if '32' in platform.architecture()[0] else 64
@@ -55,7 +55,7 @@ class PackageGenerator:
             self.bytesize = 64
         if self.arch == 32:
             self.bytesize = 32
-        else:
+        elif self.arch == 64:
            self.bytesize = 64
         self.final_output = '%s-%s-%d.msi' % (self.basename, self.version, self.bytesize)
         if self.bytesize == 64:

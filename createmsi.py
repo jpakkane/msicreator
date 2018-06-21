@@ -49,15 +49,15 @@ class PackageGenerator:
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         if 'arch' in jsondata:
-            self.bytesize = jsondata['arch']
+            self.arch = jsondata['arch']
         else:
             # rely on the environment variable since python architecture may not be the same as system architecture
             if 'PROGRAMFILES(X86)' in os.environ:
-                self.bytesize = 64
+                self.arch = 64
             else:
-                self.bytesize = 32 if '32' in platform.architecture()[0] else 64
-        self.final_output = '%s-%s-%d.msi' % (self.basename, self.version, self.bytesize)
-        if self.bytesize == 64:
+                self.arch = 32 if '32' in platform.architecture()[0] else 64
+        self.final_output = '%s-%s-%d.msi' % (self.basename, self.version, self.arch)
+        if self.arch == 64:
             self.progfile_dir = 'ProgramFiles64Folder'
             if platform.system() == "Windows":
                 redist_glob = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x64.msm'
@@ -103,7 +103,7 @@ class PackageGenerator:
             'SummaryCodepage': '1252',
         })
 
-        if self.bytesize == 64:
+        if self.arch == 64:
             package.set('Platform', 'x64')
         ET.SubElement(product, 'Media', {
             'Id': '1',
@@ -204,7 +204,7 @@ class PackageGenerator:
                 'Guid': gen_guid(),
             })
             self.feature_components[staging_dir].append(component_id)
-            if self.bytesize == 64:
+            if self.arch == 64:
                 comp_xml_node.set('Win64', 'yes')
             if platform.system() == "Windows" and self.component_num == 0:
                 ET.SubElement(comp_xml_node, 'Environment', {

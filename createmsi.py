@@ -47,6 +47,7 @@ class PackageGenerator:
         self.basename = jsondata['name_base']
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
         self.addremove_icon = jsondata.get('addremove_icon', None)
+        self.startmenu_shortcut = jsondata.get('startmenu_shortcut', None)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         if 'arch' in jsondata:
@@ -118,6 +119,12 @@ class PackageGenerator:
         progfiledir = ET.SubElement(targetdir, 'Directory', {
             'Id': self.progfile_dir,
         })
+        if self.startmenu_shortcut is not None:
+            pmf = ET.SubElement(targetdir, 'Directory', {'Id': 'ProgramMenuFolder'},)
+            ET.SubElement(pmf, 'Directory', {
+                'Id': 'ApplicationProgramsFolder',
+                'Name': self.product_name,
+            })
         installdir = ET.SubElement(progfiledir, 'Directory', {
             'Id': 'INSTALLDIR',
             'Name': self.installdir,
@@ -130,6 +137,27 @@ class PackageGenerator:
                 'Language': '0',
             })
 
+        if self.startmenu_shortcut is not None:
+            ap = ET.SubElement(product, 'DirectoryRef', {'Id': 'ApplicationProgramsFolder'})
+            comp = ET.SubElement(ap, 'Component', {'Id': 'ApplicationShortcut',
+                                                   'Guid': '*',
+                                                   })
+            appsc = ET.SubElement(comp, 'Shortcut', {'Id': 'ApplicationStartMenuShortcut',
+                                                     'Name': self.product_name,
+                                                     'Description': self.comments,
+                                                     'Target': '[INSTALLDIR]' + self.startmenu_shortcut,
+                                                     'WorkingDirectory': 'INSTALLDIR',
+                                                     })
+            ET.SubElement(comp, 'RemoveFolder', {'Id': 'ApplicationProgramsFolder',
+                                                 'On': 'uninstall',
+                                                 })
+            ET.SubElement(comp, 'RegistryValue', {'Root': 'HKCU',
+                                                  'Key': 'Software\\Microsoft\\' + self.name,
+                                                  'Name': 'Installed',
+                                                  'Type': 'integer',
+                                                  'Value': '1',
+                                                  'KeyPath': 'yes',
+                                                  })
         ET.SubElement(product, 'Property', {
             'Id': 'WIXUI_INSTALLDIR',
             'Value': 'INSTALLDIR',
@@ -160,6 +188,8 @@ class PackageGenerator:
                 'Level': '1',
             })
             ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
+        if self.startmenu_shortcut is not None:
+            ET.SubElement(top_feature, 'ComponentRef', {'Id': 'ApplicationShortcut'})
         if self.addremove_icon is not None:
             icoid = 'addremoveicon.ico'
             ET.SubElement(product, 'Icon', {'Id': icoid,
@@ -174,7 +204,7 @@ class PackageGenerator:
         import xml.dom.minidom
         doc = xml.dom.minidom.parse(self.main_xml)
         with open(self.main_xml, 'w') as of:
-            of.write(doc.toprettyxml())
+            of.write(doc.toprettyxml(indent=' '))
 
     def scan_feature(self, top_feature, installdir, depth, feature):
         for sd in [feature['staged_dir']]:
@@ -205,6 +235,8 @@ class PackageGenerator:
                 'Id': component_id,
             })
 
+    def path_to_id(self, pathname):
+            return pathname.replace('\\', '_').replace('/', '_').replace('#', '_').replace('-', '_')                                                                                                   
     def create_xml(self, nodes, current_dir, parent_xml_node, staging_dir):
         cur_node = nodes[current_dir]
         if cur_node.files:
@@ -227,7 +259,7 @@ class PackageGenerator:
                 })
             self.component_num += 1
             for f in cur_node.files:
-                file_id = os.path.join(current_dir, f).replace('\\', '_').replace('/', '_').replace('#', '_').replace('-', '_')
+                file_id = self.path_to_id(os.path.join(current_dir, f))
                 ET.SubElement(comp_xml_node, 'File', {
                     'Id': file_id,
                     'Name': f,

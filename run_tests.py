@@ -14,23 +14,58 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, subprocess
+import os, sys, subprocess
 import createmsi
 
-def build_binaries():
+def build_msvcrt():
     msvcrt_file = 'program.cpp'
-    msvcrt_staging_dir = 'main'
+    msvcrt_staging_dir = 'msvcrt/main'
     msvcrt_binary_out = 'main/program.exe'
     if not os.path.exists(msvcrt_staging_dir):
         os.mkdir(msvcrt_staging_dir)
-    subprocess.check_call(['cl', '/O2', '/MD', '/EHsc', msvcrt_file, '/Fe' + msvcrt_binary_out],
+    subprocess.check_call(['cl',
+                           '/nologo',
+                           '/O2',
+                           '/MD',
+                           '/EHsc',
+                           msvcrt_file,
+                           '/Fe' + msvcrt_binary_out],
                           cwd='msvcrt')
+
+def build_iconexe():
+    staging_dir = 'shortcuts/staging'
+    if not os.path.exists(staging_dir):
+        os.mkdir(staging_dir)
+    subprocess.check_call(['rc', '/nologo', '/fomyres.res', 'myres.rc'],
+                          cwd='shortcuts')
+    subprocess.check_call(['cl',
+                           '/nologo',
+                           '/Fprog.obj',
+                           '/O2',
+                           '/MT',
+                           '/c',
+                           'prog.c'],
+                          cwd='shortcuts')
+    subprocess.check_call(['link',
+                           '/OUT:staging/iconprog.exe',
+                           'myres.res',
+                           'prog.obj',
+                           '/nologo',
+                           '/SUBSYSTEM:WINDOWS',
+                           'user32.lib',
+                           ],
+                          cwd='shortcuts')
+
+def build_binaries():
+    build_msvcrt()
+    build_iconexe()
 
 if __name__ == '__main__':
     testdirs = [('basictest', 'msidef.json'),
                 ('two_items', 'two.json'),
                 ('msvcrt', 'msvcrt.json'),
                 ('icons', 'icons.json'),
+                ('shortcuts', 'shortcuts.json'),
     ]
 
     build_binaries()

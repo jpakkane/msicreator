@@ -9,6 +9,7 @@
     "installdir": "scdir",
     "license_file": "../License.rtf",
     "startmenu_shortcut": "iconprog.exe",
+    "desktop_shortcut": "iconprog.exe",
     "parts": [
         {
          "id": "MainProgram",

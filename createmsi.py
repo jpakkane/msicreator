@@ -48,6 +48,7 @@ class PackageGenerator:
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
         self.addremove_icon = jsondata.get('addremove_icon', None)
         self.startmenu_shortcut = jsondata.get('startmenu_shortcut', None)
+        self.desktop_shortcut = jsondata.get('desktop_shortcut', None)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         if 'arch' in jsondata:
@@ -119,11 +120,15 @@ class PackageGenerator:
         progfiledir = ET.SubElement(targetdir, 'Directory', {
             'Id': self.progfile_dir,
         })
+        pmf = ET.SubElement(targetdir, 'Directory', {'Id': 'ProgramMenuFolder'},)
         if self.startmenu_shortcut is not None:
-            pmf = ET.SubElement(targetdir, 'Directory', {'Id': 'ProgramMenuFolder'},)
             ET.SubElement(pmf, 'Directory', {
                 'Id': 'ApplicationProgramsFolder',
                 'Name': self.product_name,
+            })
+        if self.desktop_shortcut is not None:
+            ET.SubElement(pmf, 'Directory', {'Id': 'DesktopFolder',
+                                             'Name': 'Desktop',
             })
         installdir = ET.SubElement(progfiledir, 'Directory', {
             'Id': 'INSTALLDIR',
@@ -140,15 +145,16 @@ class PackageGenerator:
         if self.startmenu_shortcut is not None:
             ap = ET.SubElement(product, 'DirectoryRef', {'Id': 'ApplicationProgramsFolder'})
             comp = ET.SubElement(ap, 'Component', {'Id': 'ApplicationShortcut',
-                                                   'Guid': '*',
+                                                   'Guid': gen_guid(),
                                                    })
-            appsc = ET.SubElement(comp, 'Shortcut', {'Id': 'ApplicationStartMenuShortcut',
-                                                     'Name': self.product_name,
-                                                     'Description': self.comments,
-                                                     'Target': '[INSTALLDIR]' + self.startmenu_shortcut,
-                                                     'WorkingDirectory': 'INSTALLDIR',
-                                                     })
-            ET.SubElement(comp, 'RemoveFolder', {'Id': 'ApplicationProgramsFolder',
+            ET.SubElement(comp, 'Shortcut', {'Id': 'ApplicationStartMenuShortcut',
+                                             'Name': self.product_name,
+                                             'Description': self.comments,
+                                             'Target': '[INSTALLDIR]' + self.startmenu_shortcut,
+                                             'WorkingDirectory': 'INSTALLDIR',
+            })
+            ET.SubElement(comp, 'RemoveFolder', {'Id': 'RemoveApplicationProgramsFolder',
+                                                 'Directory': 'ApplicationProgramsFolder',
                                                  'On': 'uninstall',
                                                  })
             ET.SubElement(comp, 'RegistryValue', {'Root': 'HKCU',
@@ -158,6 +164,29 @@ class PackageGenerator:
                                                   'Value': '1',
                                                   'KeyPath': 'yes',
                                                   })
+        if self.desktop_shortcut is not None:
+            desk = ET.SubElement(product, 'DirectoryRef', {'Id': 'DesktopFolder'})
+            comp = ET.SubElement(desk, 'Component', {'Id':'ApplicationShortcutDesktop',
+                                                     'Guid': gen_guid(),
+                                                     })
+            ET.SubElement(comp, 'Shortcut', {'Id': 'ApplicationDesktopShortcut',
+                                             'Name': self.product_name,
+                                             'Description': self.comments,
+                                             'Target': '[INSTALLDIR]' + self.desktop_shortcut,
+                                             'WorkingDirectory': 'INSTALLDIR',
+            })
+            ET.SubElement(comp, 'RemoveFolder', {'Id': 'RemoveDesktopFolder',
+                                                 'Directory': 'DesktopFolder',
+                                                 'On': 'uninstall',
+                                                 })
+            ET.SubElement(comp, 'RegistryValue', {'Root': 'HKCU',
+                                                  'Key': 'Software\\Microsoft\\' + self.name,
+                                                  'Name': 'Installed',
+                                                  'Type': 'integer',
+                                                  'Value': '1',
+                                                  'KeyPath': 'yes',
+                                                  })
+
         ET.SubElement(product, 'Property', {
             'Id': 'WIXUI_INSTALLDIR',
             'Value': 'INSTALLDIR',
@@ -190,6 +219,8 @@ class PackageGenerator:
             ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
         if self.startmenu_shortcut is not None:
             ET.SubElement(top_feature, 'ComponentRef', {'Id': 'ApplicationShortcut'})
+        if self.desktop_shortcut is not None:
+            ET.SubElement(top_feature, 'ComponentRef', {'Id': 'ApplicationShortcutDesktop'})
         if self.addremove_icon is not None:
             icoid = 'addremoveicon.ico'
             ET.SubElement(product, 'Icon', {'Id': icoid,

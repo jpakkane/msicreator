@@ -46,6 +46,7 @@ class PackageGenerator:
         self.update_guid = jsondata['update_guid']
         self.basename = jsondata['name_base']
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
+        self.addremove_icon = jsondata.get('addremove_icon', None)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         if 'arch' in jsondata:
@@ -159,6 +160,15 @@ class PackageGenerator:
                 'Level': '1',
             })
             ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
+        if self.addremove_icon is not None:
+            icoid = 'addremoveicon.ico'
+            ET.SubElement(product, 'Icon', {'Id': icoid,
+                                            'SourceFile': self.addremove_icon,
+            })
+            ET.SubElement(product, 'Property', {'Id': 'ARPPRODUCTICON',
+                                                'Value': icoid,
+            })
+
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually
         import xml.dom.minidom

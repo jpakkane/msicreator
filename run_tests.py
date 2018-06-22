@@ -30,6 +30,7 @@ if __name__ == '__main__':
     testdirs = [('basictest', 'msidef.json'),
                 ('two_items', 'two.json'),
                 ('msvcrt', 'msvcrt.json'),
+                ('icons', 'icons.json'),
     ]
 
     build_binaries()
@@ -37,4 +38,3 @@ if __name__ == '__main__':
         os.chdir(d[0])
         createmsi.run([d[1]])
         os.chdir('..')
-

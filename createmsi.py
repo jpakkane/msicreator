@@ -46,7 +46,6 @@ class PackageGenerator:
         self.update_guid = jsondata['update_guid']
         self.basename = jsondata['name_base']
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
-        self.arch = jsondata.get('arch', 0)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         if 'menu_shortcut' in jsondata:

@@ -48,6 +48,10 @@ class PackageGenerator:
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
+        if 'menu_shortcut' in jsondata:
+            self.menu_shortcut = jsondata['menu_shortcut'].replace('\\', '_').replace('/', '_').replace('#', '_').replace('-', '_')
+        if 'desktop_shortcut' in jsondata:
+            self.desktop_shortcut = jsondata['desktop_shortcut'].replace('\\', '_').replace('/', '_').replace('#', '_').replace('-', '_')
         if 'arch' in jsondata:
             self.arch = jsondata['arch']
         else:
@@ -81,7 +85,7 @@ class PackageGenerator:
 
     def generate_files(self):
         self.root = ET.Element('Wix', {'xmlns': 'http://schemas.microsoft.com/wix/2006/wi'})
-        product = ET.SubElement(self.root, 'Product', {
+        self.product = ET.SubElement(self.root, 'Product', {
             'Name': self.product_name,
             'Manufacturer': self.manufacturer,
             'Id': self.guid,
@@ -91,7 +95,7 @@ class PackageGenerator:
             'Version': self.version,
         })
 
-        package = ET.SubElement(product, 'Package',  {
+        package = ET.SubElement(self.product, 'Package',  {
             'Id': '*',
             'Keywords': 'Installer',
             'Description': '%s %s installer' % (self.name, self.version),
@@ -105,12 +109,12 @@ class PackageGenerator:
 
         if self.arch == 64:
             package.set('Platform', 'x64')
-        ET.SubElement(product, 'Media', {
+        ET.SubElement(self.product, 'Media', {
             'Id': '1',
             'Cabinet': self.basename + '.cab',
             'EmbedCab': 'yes',
         })
-        targetdir = ET.SubElement(product, 'Directory', {
+        targetdir = ET.SubElement(self.product, 'Directory', {
             'Id': 'TARGETDIR',
             'Name': 'SourceDir',
         })
@@ -129,16 +133,16 @@ class PackageGenerator:
                 'Language': '0',
             })
 
-        ET.SubElement(product, 'Property', {
+        ET.SubElement(self.product, 'Property', {
             'Id': 'WIXUI_INSTALLDIR',
             'Value': 'INSTALLDIR',
         })
         if platform.system() == "Windows":
-            ET.SubElement(product, 'UIRef', {
+            ET.SubElement(self.product, 'UIRef', {
                 'Id': 'WixUI_FeatureTree',
             })
 
-        top_feature = ET.SubElement(product, 'Feature', {
+        top_feature = ET.SubElement(self.product, 'Feature', {
             'Id': 'Complete',
             'Title': self.name + ' ' + self.version,
             'Description': 'The complete package',
@@ -159,6 +163,7 @@ class PackageGenerator:
                 'Level': '1',
             })
             ET.SubElement(vcredist_feature, 'MergeRef', {'Id': 'VCRedist'})
+
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually
         import xml.dom.minidom
@@ -218,11 +223,39 @@ class PackageGenerator:
             self.component_num += 1
             for f in cur_node.files:
                 file_id = os.path.join(current_dir, f).replace('\\', '_').replace('/', '_').replace('#', '_').replace('-', '_')
-                ET.SubElement(comp_xml_node, 'File', {
+                file_node = ET.SubElement(comp_xml_node, 'File', {
                     'Id': file_id,
                     'Name': f,
                     'Source': os.path.join(current_dir, f),
                 })
+                if self.menu_shortcut == file_id:
+                    ET.SubElement(file_node, 'Shortcut', {
+                       'Id': 'ApplicationStartMenuShortcut',
+                       'Directory': 'ProgramMenuFolder',
+                       'Name': self.name,
+                       'Description': self.comments,
+                       'Advertise': 'yes',
+                       'Icon': 'icon_' + file_id,
+                       'IconIndex': '0',
+                    })
+                    ET.SubElement(self.product, 'Icon', {
+                       'Id': 'icon_' + file_id,
+                       'SourceFile': os.path.join(current_dir, f),
+                    })
+                if self.desktop_shortcut == file_id:
+                    ET.SubElement(file_node, 'Shortcut', {
+                       'Id': 'ApplicationDesktopShortcut',
+                       'Directory': 'DesktopFolder',
+                       'Name': self.name,
+                       'Description': self.comments,
+                       'Advertise': 'yes',
+                       'Icon': 'icon_desktop_' + file_id,
+                       'IconIndex': '0',
+                    })
+                    ET.SubElement(self.product, 'Icon', {
+                       'Id': 'icon_desktop_' + file_id,
+                       'SourceFile': os.path.join(current_dir, f),
+                    })
 
         for dirname in cur_node.dirs:
             dir_id = os.path.join(current_dir, dirname).replace('\\', '_').replace('/', '_')

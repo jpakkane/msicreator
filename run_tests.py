@@ -18,13 +18,13 @@ import os, subprocess
 import createmsi
 
 def build_binaries():
-    msvcrt_file = 'msvcrt/program.cpp'
-    msvcrt_staging_dir = 'msvcrt/main'
-    msvcrt_binary_out = 'msvcrt/main/program.exe'
+    msvcrt_file = 'program.cpp'
+    msvcrt_staging_dir = 'main'
+    msvcrt_binary_out = 'main/program.exe'
     if not os.path.exists(msvcrt_staging_dir):
         os.mkdir(msvcrt_staging_dir)
-    subprocess.check_call(['cl', '/O2', '/MD', '/EHsc', msvcrt_file, '/Fe' + msvcrt_binary_out])
-    os.unlink('program.obj')
+    subprocess.check_call(['cl', '/O2', '/MD', '/EHsc', msvcrt_file, '/Fe' + msvcrt_binary_out],
+                          cwd='msvcrt')
 
 if __name__ == '__main__':
     testdirs = [('basictest', 'msidef.json'),

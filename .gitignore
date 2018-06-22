@@ -4,5 +4,6 @@
 *.wixpdb
 *.msi
 *.exe
+*.obj
 __pycache__
 

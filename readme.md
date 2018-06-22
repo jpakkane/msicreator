@@ -5,9 +5,11 @@ one or more staging directories.
 
 ## Quick usage
 
-This script creates MSI installer packages using
-[WiX](http://wixtoolset.org/). The installers may have one or more
-parts. Understanding the installer is perhaps best learned through an example.
+This script creates MSI installer packages. It supports both
+[WiX](http://wixtoolset.org/) and
+[msitools](https://wiki.gnome.org/msitools]. The installers may have
+one or more parts. Understanding the installer is perhaps best learned
+through an example.
 
 Suppose that once installed your application looks like this:
 
@@ -44,14 +46,15 @@ would look like this:
     "update_guid": "YOUR-GUID-HERE",
     "version": "1.0.0",
     "product_name": "Product name here",
-    "manufacturer": "Your organization's name hiere",
+    "manufacturer": "Your organization's name here",
     "name": "Name of product here",
     "name_base": "myprog",
     "comments": "A comment describing the program",
     "installdir": "MyProg",
     "license_file": "License.rtf",
     "parts": [
-        {"id": "MainProgram",
+        {
+         "id": "MainProgram",
          "title": "Program name",
          "description": "The MyProg program",
          "absent": "disallow",

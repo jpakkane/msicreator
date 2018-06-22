@@ -9,13 +9,15 @@
     "installdir": "Elite Foobar",
     "license_file": "../License.rtf",
     "parts": [
-        {"id": "MainLibrary",
+        {
+         "id": "MainLibrary",
          "title": "Foobar lib",
          "description": "The main binary and library",
          "absent": "disallow",
          "staged_dir": "main"
         },
-        {"id": "Devel",
+        {
+         "id": "Devel",
          "title": "Development files",
          "description": "Header and import library",
          "staged_dir": "devel"

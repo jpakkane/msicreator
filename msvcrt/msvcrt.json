@@ -10,7 +10,8 @@
     "license_file": "../License.rtf",
     "need_msvcrt": true,
     "parts": [
-        {"id": "MainProgram",
+        {
+         "id": "MainProgram",
          "title": "The Program",
          "description": "The main program",
          "absent": "disallow",

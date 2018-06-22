@@ -9,7 +9,8 @@
     "installdir": "batdir",
     "license_file": "../License.rtf",
     "parts": [
-        {"id": "MainProgram",
+        {
+         "id": "MainProgram",
          "title": "The Bat",
          "description": "The main program",
          "absent": "disallow",

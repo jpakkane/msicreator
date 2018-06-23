@@ -7,7 +7,7 @@ one or more staging directories.
 
 This script creates MSI installer packages. It supports both
 [WiX](http://wixtoolset.org/) and
-[msitools](https://wiki.gnome.org/msitools]. The installers may have
+[msitools](https://wiki.gnome.org/msitools). The installers may have
 one or more parts. Understanding the installer is perhaps best learned
 through an example.
 

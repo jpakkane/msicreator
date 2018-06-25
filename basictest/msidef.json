@@ -1,6 +1,6 @@
 {
-    "update_guid": "62D966F1-B64C-4D0B-A0D4-8DB4439063B3",
-    "version": "1.0.0",
+    "upgrade_guid": "62D966F1-B64C-4D0B-A0D4-8DB4439063B3",
+    "version": "1.2.0",
     "product_name": "Simple BAT test",
     "manufacturer": "The BAT men",
     "name": "Simple Bat",

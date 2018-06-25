@@ -43,7 +43,7 @@ class PackageGenerator:
         self.license_file = jsondata['license_file']
         self.name = jsondata['name']
         self.guid = '*'
-        self.update_guid = jsondata['update_guid']
+        self.upgrade_guid = jsondata['upgrade_guid']
         self.basename = jsondata['name_base']
         self.need_msvcrt = jsondata.get('need_msvcrt', False)
         self.addremove_icon = jsondata.get('addremove_icon', None)
@@ -88,7 +88,7 @@ class PackageGenerator:
             'Name': self.product_name,
             'Manufacturer': self.manufacturer,
             'Id': self.guid,
-            'UpgradeCode': self.update_guid,
+            'UpgradeCode': self.upgrade_guid,
             'Language': '1033',
             'Codepage':  '1252',
             'Version': self.version,
@@ -106,6 +106,7 @@ class PackageGenerator:
             'SummaryCodepage': '1252',
         })
 
+        ET.SubElement(product, 'MajorUpgrade', {'DowngradeErrorMessage': 'A newer version of %s is already installed.' % self.name})
         if self.arch == 64:
             package.set('Platform', 'x64')
         ET.SubElement(product, 'Media', {

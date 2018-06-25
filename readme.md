@@ -43,7 +43,7 @@ would look like this:
 
 ```json
 {
-    "update_guid": "YOUR-GUID-HERE",
+    "upgrade_guid": "YOUR-GUID-HERE",
     "version": "1.0.0",
     "product_name": "Product name here",
     "manufacturer": "Your organization's name here",

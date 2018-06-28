@@ -252,8 +252,9 @@ class PackageGenerator:
                 self.create_registry_entries(registry_entries_component, r)
 
         if self.custom_actions is not None:
+            install_execute_sequence = ET.SubElement(product, 'InstallExecuteSequence')
             for f in self.custom_actions:
-                self.create_custom_actions(product, f)
+                self.create_custom_actions(product, install_execute_sequence, f)
 
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually
@@ -274,7 +275,7 @@ class PackageGenerator:
             'KeyPath': reg['key_path'],
           })
 
-    def create_custom_actions(self, product, action):
+    def create_custom_actions(self, product, install_execute_sequence, action):
         ET.SubElement(product, 'CustomAction', {
             'Id': action['id'],
             'Property': action['property'],
@@ -283,7 +284,6 @@ class PackageGenerator:
             'Return': action['return'],
             'Impersonate': action['impersonate'],
         })
-        install_execute_sequence = ET.SubElement(product, 'InstallExecuteSequence')
         ET.SubElement(install_execute_sequence, 'Custom', {
             'Action': action['id'],
             'After': action['after'],

@@ -282,9 +282,10 @@ class PackageGenerator:
             'Return': action['return'],
             'Impersonate': action['impersonate'],
         })
+        key = 'After' if action.has_key('after') else 'Before'
         ET.SubElement(install_execute_sequence, 'Custom', {
             'Action': action['id'],
-            'After': action['after'],
+            key: action[key.lower()],
         })
 
     def scan_feature(self, top_feature, installdir, depth, feature):

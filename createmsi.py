@@ -78,6 +78,7 @@ class PackageGenerator:
                 sys.exit('There are more than one potential redist dirs.')
             self.redist_path = trials[0]
         self.component_num = 0
+        self.registry_entries = jsondata.get('registry_entries', None)
         self.parts = jsondata['parts']
         self.feature_components = {}
         self.feature_properties = {}
@@ -231,12 +232,32 @@ class PackageGenerator:
                                                 'Value': icoid,
             })
 
+        if self.registry_entries is not None:
+            registry_entries_directory = ET.SubElement(product, 'DirectoryRef', {'Id': 'TARGETDIR'})
+            registry_entries_component = ET.SubElement(registry_entries_directory, 'Component', {'Id': 'RegistryEntries', 'Guid': gen_guid()})
+            ET.SubElement(top_feature, 'ComponentRef', {'Id': 'RegistryEntries'})
+            for r in self.registry_entries:
+                self.create_registry_entries(registry_entries_component, r)
+
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually
         import xml.dom.minidom
         doc = xml.dom.minidom.parse(self.main_xml)
         with open(self.main_xml, 'w') as of:
             of.write(doc.toprettyxml(indent=' '))
+
+    def create_registry_entries(self, comp, reg):
+        reg_key = ET.SubElement(comp, 'RegistryKey', {
+            'Root': reg['root'],
+            'Key': reg['key'],
+            'Action': reg['action'],
+        })
+        ET.SubElement(reg_key, 'RegistryValue', {
+            'Name': reg['name'],
+            'Type': reg['type'],
+            'Value': reg['value'],
+            'KeyPath': reg['key_path'],
+          })
 
     def scan_feature(self, top_feature, installdir, depth, feature):
         for sd in [feature['staged_dir']]:

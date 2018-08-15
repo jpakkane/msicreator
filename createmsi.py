@@ -235,6 +235,8 @@ class PackageGenerator:
         if self.registry_entries is not None:
             registry_entries_directory = ET.SubElement(product, 'DirectoryRef', {'Id': 'TARGETDIR'})
             registry_entries_component = ET.SubElement(registry_entries_directory, 'Component', {'Id': 'RegistryEntries', 'Guid': gen_guid()})
+            if self.arch == 64:
+                registry_entries_component.set('Win64', 'yes')
             ET.SubElement(top_feature, 'ComponentRef', {'Id': 'RegistryEntries'})
             for r in self.registry_entries:
                 self.create_registry_entries(registry_entries_component, r)

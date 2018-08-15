@@ -66,6 +66,7 @@ if __name__ == '__main__':
                 ('msvcrt', 'msvcrt.json'),
                 ('icons', 'icons.json'),
                 ('shortcuts', 'shortcuts.json'),
+                ('registryentries', 'registryentry.json')
     ]
 
     build_binaries()

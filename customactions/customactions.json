@@ -1,0 +1,31 @@
+{
+    "upgrade_guid": "2DE3A7D5-0B2A-6A45-A93E-7700766A811F",
+    "version": "1.0.0",
+    "product_name": "Custom Action test",
+    "manufacturer": "Somebody",
+    "name": "Custom Action test",
+    "name_base": "customaction",
+    "comments": "Custom Action creation for executing script doing install",
+    "installdir": "customaction",
+    "license_file": "../License.rtf",
+    "custom_actions": [
+        {
+         "id": "ActionIdentifier",
+         "property": "",
+         "exe_command": "\"[INSTALLDIR]prog.bat\"",
+         "execute": "deferred",
+         "return": "ignore",
+         "impersonate": "no",
+         "after": "InstallFiles"
+        }
+    ],
+    "parts": [
+        {
+         "id": "MainProgram",
+         "title": "The Program",
+         "description": "This does nothing",
+         "absent": "disallow",
+         "staged_dir": "main"
+        }
+    ]
+}

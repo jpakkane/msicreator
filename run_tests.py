@@ -67,7 +67,8 @@ if __name__ == '__main__':
                 ('icons', 'icons.json'),
                 ('shortcuts', 'shortcuts.json'),
                 ('registryentries', 'registryentry.json'),
-                ('majorupgrade', 'majorupgrade.json')
+                ('majorupgrade', 'majorupgrade.json'),
+                ('customactions', 'customactions.json')
     ]
 
     build_binaries()

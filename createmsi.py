@@ -79,6 +79,7 @@ class PackageGenerator:
             self.redist_path = trials[0]
         self.component_num = 0
         self.registry_entries = jsondata.get('registry_entries', None)
+        self.major_upgrade = jsondata.get('major_upgrade', None)
         self.parts = jsondata['parts']
         self.feature_components = {}
         self.feature_properties = {}
@@ -107,7 +108,12 @@ class PackageGenerator:
             'SummaryCodepage': '1252',
         })
 
-        ET.SubElement(product, 'MajorUpgrade', {'DowngradeErrorMessage': 'A newer version of %s is already installed.' % self.name})
+        if self.major_upgrade is not None:
+            majorupgrade = ET.SubElement(product, 'MajorUpgrade', {})
+            for mkey in self.major_upgrade.keys():
+                majorupgrade.set(mkey, self.major_upgrade[mkey])
+        else:
+            ET.SubElement(product, 'MajorUpgrade', {'DowngradeErrorMessage': 'A newer version of %s is already installed.' % self.name})
         if self.arch == 64:
             package.set('Platform', 'x64')
         ET.SubElement(product, 'Media', {

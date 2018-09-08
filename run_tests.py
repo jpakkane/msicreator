@@ -88,6 +88,7 @@ if __name__ == '__main__':
                 ('productguid', 'productguid.json'),
                 ('UIgraphics', 'uigraphics.json'),
                 #('withoutlicense', 'withoutlicense.json')
+                ('customactions', 'customactions.json')
     ]
 
     if shutil.which('wix') is None:

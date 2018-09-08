@@ -284,7 +284,7 @@ class PackageGenerator:
             'Return': action['return'],
             'Impersonate': action['impersonate'],
         })
-        key = 'After' if action.has_key('after') else 'Before'
+        key = 'After' if 'after' in action else 'Before'
         ET.SubElement(install_execute_sequence, 'Custom', {
             'Action': action['id'],
             key: action[key.lower()],

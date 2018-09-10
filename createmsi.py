@@ -274,9 +274,13 @@ class PackageGenerator:
           })
 
     def create_custom_actions(self, product, install_execute_sequence, action):
+        ET.SubElement(product, 'Property', {
+            'Id': 'cmd',
+            'Value': 'cmd.exe'
+        })
         ET.SubElement(product, 'CustomAction', {
             'Id': action['id'],
-            'Property': action['property'],
+            'Property': 'cmd',
             'ExeCommand': action['exe_command'],
             'Execute': action['execute'],
             'Return': action['return'],
@@ -374,7 +378,8 @@ class PackageGenerator:
                                    '-out', self.final_output,
                                    self.main_o])
         else:
-            subprocess.check_call([os.path.join(wixdir, 'wixl'), '-o', self.final_output, self.main_xml])
+            xarch = 'x' + str(self.arch)
+            subprocess.check_call([os.path.join(wixdir, 'wixl'), '-a', xarch, '-o', self.final_output, self.main_xml])
 
 def run(args):
     if len(args) != 1:

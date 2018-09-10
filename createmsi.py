@@ -253,6 +253,9 @@ class PackageGenerator:
 
         if self.custom_actions is not None:
             install_execute_sequence = ET.SubElement(product, 'InstallExecuteSequence')
+            ET.SubElement(install_execute_sequence, 'RemoveExistingProducts', {
+                'After': 'InstallFinalize'
+            })
             ET.SubElement(product, 'Property', {
                 'Id': 'cmd',
                 'Value': 'cmd.exe'

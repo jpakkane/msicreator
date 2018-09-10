@@ -378,7 +378,7 @@ class PackageGenerator:
                                    '-out', self.final_output,
                                    self.main_o])
         else:
-            xarch = 'x' + str(self.arch)
+            xarch = 'x86' if self.arch == 32 else 'x64'
             subprocess.check_call([os.path.join(wixdir, 'wixl'), '-a', xarch, '-o', self.final_output, self.main_xml])
 
 def run(args):

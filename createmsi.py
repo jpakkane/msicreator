@@ -276,9 +276,13 @@ class PackageGenerator:
           })
 
     def create_custom_actions(self, product, install_execute_sequence, action):
+        ET.SubElement(product, 'Property', {
+            'Id': 'cmd',
+            'Value': 'cmd.exe'
+        })
         ET.SubElement(product, 'CustomAction', {
             'Id': action['id'],
-            'Property': action['property'],
+            'Property': 'cmd',
             'ExeCommand': action['exe_command'],
             'Execute': action['execute'],
             'Return': action['return'],

@@ -84,6 +84,7 @@ class PackageGenerator:
         self.component_num = 0
         self.registry_entries = jsondata.get('registry_entries', None)
         self.major_upgrade = jsondata.get('major_upgrade', None)
+        self.custom_actions = jsondata.get('custom_actions', None)
         self.parts = jsondata['parts']
         self.feature_components = {}
         self.feature_properties = {}
@@ -251,6 +252,18 @@ class PackageGenerator:
             for r in self.registry_entries:
                 self.create_registry_entries(registry_entries_component, r)
 
+        if self.custom_actions is not None:
+            install_execute_sequence = ET.SubElement(product, 'InstallExecuteSequence')
+            ET.SubElement(install_execute_sequence, 'RemoveExistingProducts', {
+                'After': 'InstallFinalize'
+            })
+            ET.SubElement(product, 'Property', {
+                'Id': 'cmd',
+                'Value': 'cmd.exe'
+            })
+            for f in self.custom_actions:
+                self.create_custom_actions(product, install_execute_sequence, f)
+
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually
         import xml.dom.minidom
@@ -270,6 +283,21 @@ class PackageGenerator:
             'Value': reg['value'],
             'KeyPath': reg['key_path'],
           })
+
+    def create_custom_actions(self, product, install_execute_sequence, action):
+        ET.SubElement(product, 'CustomAction', {
+            'Id': action['id'],
+            'Property': 'cmd',
+            'ExeCommand': action['exe_command'],
+            'Execute': action['execute'],
+            'Return': action['return'],
+            'Impersonate': action['impersonate'],
+        })
+        key = 'After' if 'after' in action else 'Before'
+        ET.SubElement(install_execute_sequence, 'Custom', {
+            'Action': action['id'],
+            key: action[key.lower()],
+        })
 
     def scan_feature(self, top_feature, installdir, depth, feature):
         for sd in [feature['staged_dir']]:
@@ -362,7 +390,8 @@ class PackageGenerator:
                                    '-out', self.final_output,
                                    self.main_o])
         else:
-            subprocess.check_call([os.path.join(wixdir, 'wixl'), '-o', self.final_output, self.main_xml])
+            xarch = 'x86' if self.arch == 32 else 'x64'
+            subprocess.check_call([os.path.join(wixdir, 'wixl'), '-a', xarch, '-o', self.final_output, self.main_xml])
 
 def run(args):
     if len(args) != 1:

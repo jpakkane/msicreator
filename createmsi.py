@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys, os, subprocess, shutil, uuid, json
+import sys, os, subprocess, shutil, uuid, json, re
 from glob import glob
 import platform
 import xml.etree.ElementTree as ET
@@ -51,6 +51,7 @@ class PackageGenerator:
         self.desktop_shortcut = jsondata.get('desktop_shortcut', None)
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
+        self.idnum = 0
         if 'arch' in jsondata:
             self.arch = jsondata['arch']
         else:
@@ -300,7 +301,11 @@ class PackageGenerator:
             })
 
     def path_to_id(self, pathname):
-            return pathname.replace('\\', '_').replace('/', '_').replace('#', '_').replace('-', '_')                                                                                                   
+        #return re.sub(r'[^a-zA-Z0-9_.]', '_', str(pathname))[-72:]
+        idstr = f'pathid{self.idnum}'
+        self.idnum += 1
+        return idstr
+
     def create_xml(self, nodes, current_dir, parent_xml_node, staging_dir):
         cur_node = nodes[current_dir]
         if cur_node.files:
@@ -331,7 +336,7 @@ class PackageGenerator:
                 })
 
         for dirname in cur_node.dirs:
-            dir_id = os.path.join(current_dir, dirname).replace('\\', '_').replace('/', '_')
+            dir_id = self.path_to_id(os.path.join(current_dir, dirname))
             dir_node = ET.SubElement(parent_xml_node, 'Directory', {
                 'Id': dir_id,
                 'Name': dirname,
@@ -353,6 +358,7 @@ class PackageGenerator:
                                    '-ext', 'WixUIExtension',
                                    '-cultures:en-us',
                                    '-dWixUILicenseRtf=' + self.license_file,
+                                   '-dcl:high',
                                    '-out', self.final_output,
                                    self.main_o])
         else:

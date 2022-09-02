@@ -72,6 +72,8 @@ if __name__ == '__main__':
 
     build_binaries()
     for d in testdirs:
+        print("\n\nTest:", d[0], '\n')
         os.chdir(d[0])
-        createmsi.run([d[1]])
+        createmsi.run([d[1]]) # In case of error this throws a sys.exit.
         os.chdir('..')
+    print('All tests pass.')

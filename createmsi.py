@@ -63,19 +63,22 @@ class PackageGenerator:
         if self.arch == 64:
             self.progfile_dir = 'ProgramFiles64Folder'
             if platform.system() == "Windows":
-                redist_glob = 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x64.msm'
+                redist_glob = 'C:\\Program Files\\Microsoft Visual Studio\\*\\*\\VC\\Redist\\MSVC\\v*\\MergeModules\\Microsoft_VC*_CRT_x64.msm'
             else:
                 redist_glob = '/usr/share/msicreator/Microsoft_VC141_CRT_x64.msm'
         else:
             self.progfile_dir = 'ProgramFilesFolder'
             if platform.system() == "Windows":
-                redist_glob = 'C:\\Program Files\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC141_CRT_x86.msm'
+                redist_glob = 'C:\\Program Files\\Microsoft Visual Studio\\*\\Community\\VC\\Redist\\MSVC\\*\\MergeModules\\Microsoft_VC*_CRT_x86.msm'
             else:
                 redist_glob = '/usr/share/msicreator/Microsoft_VC141_CRT_x86.msm'
         trials = glob(redist_glob)
         if self.need_msvcrt:
-            if len(trials) != 1:
-                sys.exit('There are more than one potential redist dirs.')
+            if len(trials) > 1:
+                sys.exit('There are more than one redist dirs: ' + 
+                         ', '.join(trials))
+            if len(trials) == 0:
+                sys.exit('No redist dirs were detected, install MSM redistributables with VS installer.')
             self.redist_path = trials[0]
         self.component_num = 0
         self.registry_entries = jsondata.get('registry_entries', None)

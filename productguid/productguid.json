@@ -1,0 +1,21 @@
+{
+    "product_guid": "586619D2-9481-41CC-89B2-F96F16362DDC",
+    "upgrade_guid": "9DE3A7D5-0B2D-4A45-A73E-8800766A811A",
+    "version": "1.0.0",
+    "product_name": "Product GUID entry test",
+    "manufacturer": "Rakielle",
+    "name": "Product GUID test",
+    "name_base": "productguid",
+    "comments": "Testing product GUID attribute",
+    "installdir": "productguid",
+    "license_file": "../License.rtf",
+    "parts": [
+        {
+         "id": "MainProgram",
+         "title": "The Program",
+         "description": "This does nothing",
+         "absent": "disallow",
+         "staged_dir": "main"
+        }
+    ]
+}

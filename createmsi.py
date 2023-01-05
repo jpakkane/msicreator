@@ -42,7 +42,7 @@ class PackageGenerator:
         self.installdir = jsondata['installdir']
         self.license_file = jsondata['license_file']
         self.name = jsondata['name']
-        self.guid = '*'
+        self.guid = jsondata.get('product_guid', '*')
         self.upgrade_guid = jsondata['upgrade_guid']
         self.basename = jsondata['name_base']
         self.need_msvcrt = jsondata.get('need_msvcrt', False)

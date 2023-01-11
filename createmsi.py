@@ -31,6 +31,11 @@ class Node:
         self.dirs = dirs
         self.files = files
 
+class UIGraphics:
+    def __init__(self):
+        self.banner = None
+        self.background = None
+
 class PackageGenerator:
 
     def __init__(self, jsonfile):
@@ -52,6 +57,12 @@ class PackageGenerator:
         self.main_xml = self.basename + '.wxs'
         self.main_o = self.basename + '.wixobj'
         self.idnum = 0
+        self.graphics = UIGraphics()
+        if 'graphics' in jsondata:
+            if 'banner' in jsondata['graphics']:
+                self.graphics.banner = jsondata['graphics']['banner']
+            if 'background' in jsondata['graphics']:
+                self.graphics.background = jsondata['graphics']['background']
         if 'arch' in jsondata:
             self.arch = jsondata['arch']
         else:
@@ -206,6 +217,17 @@ class PackageGenerator:
         if platform.system() == "Windows":
             ET.SubElement(product, 'UIRef', {
                 'Id': 'WixUI_FeatureTree',
+            })
+
+        if self.graphics.banner is not None:
+            ET.SubElement(product, 'WixVariable', {
+                'Id': 'WixUIBannerBmp',
+                'Value': self.graphics.banner,
+            })
+        if self.graphics.background is not None:
+            ET.SubElement(product, 'WixVariable', {
+                'Id': 'WixUIDialogBmp', 
+                'Value': self.graphics.background,
             })
 
         top_feature = ET.SubElement(product, 'Feature', {

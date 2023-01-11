@@ -1,0 +1,26 @@
+{
+    "upgrade_guid": "2706BE3F-6C64-4B98-A38C-1186FCA6FDF1",
+    "version": "1.0.0",
+    "product_name": "UIgraphics test",
+    "manufacturer": "Kwak",
+    "name": "UI test",
+    "name_base": "uigraphics",
+    "comments": "Testing uigraphics customizations",
+    "installdir": "uigraphsdir",
+    "license_file": "../License.rtf",
+    "graphics":
+        {
+        "banner": "banner.bmp",
+        "background": "background.bmp"
+        }
+    ,
+    "parts": [
+        {
+         "id": "MainProgram",
+         "title": "UIgraphics test",
+         "description": "The main target",
+         "absent": "disallow",
+         "staged_dir": "staging"
+        }
+    ]
+}

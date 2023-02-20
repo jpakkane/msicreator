@@ -45,7 +45,7 @@ class PackageGenerator:
         self.version = jsondata['version']
         self.comments = jsondata['comments']
         self.installdir = jsondata['installdir']
-        self.license_file = jsondata['license_file']
+        self.license_file = jsondata.get('license_file', None)
         self.name = jsondata['name']
         self.guid = jsondata.get('product_guid', '*')
         self.upgrade_guid = jsondata['upgrade_guid']
@@ -215,9 +215,12 @@ class PackageGenerator:
             'Value': 'INSTALLDIR',
         })
         if platform.system() == "Windows":
-            ET.SubElement(product, 'UIRef', {
-                'Id': 'WixUI_FeatureTree',
-            })
+            if self.license_file:
+                ET.SubElement(product, 'UIRef', {
+                    'Id': 'WixUI_FeatureTree',
+                })
+            else:
+                self.create_licenseless_dialog_entries(product)
 
         if self.graphics.banner is not None:
             ET.SubElement(product, 'WixVariable', {
@@ -365,6 +368,208 @@ class PackageGenerator:
             })
             self.create_xml(nodes, os.path.join(current_dir, dirname), dir_node, staging_dir)
 
+    def create_licenseless_dialog_entries(self, product_element):
+        ui = ET.SubElement(product_element, 'UI', {
+            'Id': 'WixUI_FeatureTree'
+        })
+
+        ET.SubElement(ui, 'TextStyle', {
+            'Id': 'WixUI_Font_Normal',
+            'FaceName': 'Tahoma',
+            'Size': '8'
+        })
+
+        ET.SubElement(ui, 'TextStyle', {
+            'Id': 'WixUI_Font_Bigger',
+            'FaceName': 'Tahoma',
+            'Size': '12'
+        })
+
+        ET.SubElement(ui, 'TextStyle', {
+            'Id': 'WixUI_Font_Title',
+            'FaceName': 'Tahoma',
+            'Size': '9',
+            'Bold': 'yes'
+        })
+
+        ET.SubElement(ui, 'Property', {
+            'Id': 'DefaultUIFont',
+            'Value': 'WixUI_Font_Normal'
+        })
+
+        ET.SubElement(ui, 'Property', {
+            'Id': 'WixUI_Mode',
+            'Value': 'FeatureTree'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'ErrorDlg'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'FatalError'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'FilesInUse'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'MsiRMFilesInUse'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'PrepareDlg'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'ProgressDlg'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'ResumeDlg'
+        })
+
+        ET.SubElement(ui, 'DialogRef', {
+            'Id': 'UserExit'
+        })
+
+        pub_exit = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'ExitDialog',
+            'Control': 'Finish',
+            'Event': 'EndDialog',
+            'Value': 'Return',
+            'Order': '999'
+        })
+
+        pub_exit.text = '1'
+
+        pub_welcome_next = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'WelcomeDlg',
+            'Control': 'Next',
+            'Event': 'NewDialog',
+            'Value': 'CustomizeDlg'
+        })
+
+        pub_welcome_next.text = 'NOT Installed'
+
+        pub_welcome_maint_next = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'WelcomeDlg',
+            'Control': 'Next',
+            'Event': 'NewDialog',
+            'Value': 'VerifyReadyDlg'
+        })
+
+        pub_welcome_maint_next.text = 'Installed AND PATCH'
+
+        pub_customize_back_maint = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'CustomizeDlg',
+            'Control': 'Back',
+            'Event': 'NewDialog',
+            'Value': 'MaintenanceTypeDlg',
+            'Order': '1'
+        })
+
+        pub_customize_back_maint.text = 'Installed'
+
+        pub_customize_back_welcome = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'CustomizeDlg',
+            'Control': 'Back',
+            'Event': 'NewDialog',
+            'Value': 'WelcomeDlg',
+            'Order': '2'
+        })
+
+        pub_customize_back_welcome.text = 'Not Installed'
+
+        pub_customize_next = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'CustomizeDlg',
+            'Control': 'Next',
+            'Event': 'NewDialog',
+            'Value': 'VerifyReadyDlg'
+        })
+
+        pub_customize_next.text = '1'
+
+        pub_verify_customize_back = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'VerifyReadyDlg',
+            'Control': 'Back',
+            'Event': 'NewDialog',
+            'Value': 'CustomizeDlg',
+            'Order': '1'
+        })
+
+        pub_verify_customize_back.text = 'NOT Installed OR WixUI_InstallMode = "Change"'
+
+        pub_verify_maint_back = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'VerifyReadyDlg',
+            'Control': 'Back',
+            'Event': 'NewDialog',
+            'Value': 'MaintenanceTypeDlg',
+            'Order': '2'
+        })
+
+        pub_verify_maint_back.text = 'Installed AND NOT PATCH'
+
+        pub_verify_welcome_back = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'VerifyReadyDlg',
+            'Control': 'Back',
+            'Event': 'NewDialog',
+            'Value': 'WelcomeDlg',
+            'Order': '3'
+        })
+
+        pub_verify_welcome_back.text = 'Installed AND PATCH'
+
+        pub_maint_welcome_next = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'MaintenanceWelcomeDlg',
+            'Control': 'Next',
+            'Event': 'NewDialog',
+            'Value': 'MaintenanceTypeDlg'
+        })
+
+        pub_maint_welcome_next.text = '1'
+
+        pub_maint_type_change = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'MaintenanceTypeDlg',
+            'Control': 'ChangeButton',
+            'Event': 'NewDialog',
+            'Value': 'CustomizeDlg'
+        })
+
+        pub_maint_type_change.text = '1'
+
+        pub_maint_type_repair = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'MaintenanceTypeDlg',
+            'Control': 'RepairButton',
+            'Event': 'NewDialog',
+            'Value': 'VerifyReadyDlg'
+        })
+
+        pub_maint_type_repair.text = '1'
+
+        pub_maint_type_remove = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'MaintenanceTypeDlg',
+            'Control': 'RemoveButton',
+            'Event': 'NewDialog',
+            'Value': 'VerifyReadyDlg'
+        })
+
+        pub_maint_type_remove.text = '1'
+
+        pub_maint_type_back = ET.SubElement(ui, 'Publish', {
+            'Dialog': 'MaintenanceTypeDlg',
+            'Control': 'Back',
+            'Event': 'NewDialog',
+            'Value': 'MaintenanceWelcomeDlg'
+        })
+
+        pub_maint_type_back.text = '1'
+
+        ET.SubElement(product_element, 'UIRef', {
+            'Id': 'WixUI_Common',
+        })
+
     def build_package(self):
         wixdir = 'c:\\Program Files\\Wix Toolset v3.11\\bin'
         if platform.system() != "Windows":
@@ -379,7 +584,7 @@ class PackageGenerator:
             subprocess.check_call([os.path.join(wixdir, 'light'),
                                    '-ext', 'WixUIExtension',
                                    '-cultures:en-us',
-                                   '-dWixUILicenseRtf=' + self.license_file,
+                                   '-dWixUILicenseRtf=' + self.license_file if self.license_file else '',
                                    '-dcl:high',
                                    '-out', self.final_output,
                                    self.main_o])

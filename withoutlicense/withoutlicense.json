@@ -1,0 +1,19 @@
+{
+    "upgrade_guid": "451C1482-4F33-47A4-ADDB-9C7CD17E258F",
+    "version": "1.2.0",
+    "product_name": "Without License test",
+    "manufacturer": "Rakielle",
+    "name": "Without License",
+    "name_base": "withoutlicense",
+    "comments": "An Installer Without License",
+    "installdir": "licensedir",
+    "parts": [
+        {
+         "id": "MainProgram",
+         "title": "The License",
+         "description": "This creates an Installer Without License",
+         "absent": "disallow",
+         "staged_dir": "main"
+        }
+    ]
+}

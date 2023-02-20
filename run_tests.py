@@ -69,7 +69,8 @@ if __name__ == '__main__':
                 ('registryentries', 'registryentry.json'),
                 ('majorupgrade', 'majorupgrade.json'),
                 ('productguid', 'productguid.json'),
-                ('UIgraphics', 'uigraphics.json')
+                ('UIgraphics', 'uigraphics.json'),
+                ('withoutlicense', 'withoutlicense.json')
     ]
 
     build_binaries()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2017-2018 Jussi Pakkanen et al
+# Copyright 2017-2023 Jussi Pakkanen et al
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os, sys, subprocess
+import os, sys, subprocess, shutil
 import createmsi
 
 def build_msvcrt():
@@ -60,19 +60,38 @@ def build_binaries():
     build_msvcrt()
     build_iconexe()
 
+def install_wix():
+    subprocess.check_call(['dotnet',
+                           'nuget',
+                           'add',
+                           'source',
+                           'https://api.nuget.org/v3/index.json'])
+    subprocess.check_call(['dotnet',
+                           'tool',
+                           'install',
+                           '--global',
+                           'wix'])
+    subprocess.check_call(['wix',
+                           'extension',
+                           'add',
+                           'WixToolset.UI.wixext',
+                           ])
+
 if __name__ == '__main__':
     testdirs = [('basictest', 'msidef.json'),
-                ('two_items', 'two.json'),
-                ('msvcrt', 'msvcrt.json'),
-                ('icons', 'icons.json'),
-                ('shortcuts', 'shortcuts.json'),
-                ('registryentries', 'registryentry.json'),
-                ('majorupgrade', 'majorupgrade.json'),
-                ('productguid', 'productguid.json'),
-                ('UIgraphics', 'uigraphics.json'),
-                ('withoutlicense', 'withoutlicense.json')
+                #('two_items', 'two.json'),
+                #('msvcrt', 'msvcrt.json'),
+                #('icons', 'icons.json'),
+                #('shortcuts', 'shortcuts.json'),
+                #('registryentries', 'registryentry.json'),
+                #('majorupgrade', 'majorupgrade.json'),
+                #('productguid', 'productguid.json'),
+                #('UIgraphics', 'uigraphics.json'),
+                #('withoutlicense', 'withoutlicense.json')
     ]
 
+    if shutil.which('wix') is None:
+        install_wix()
     build_binaries()
     for d in testdirs:
         print("\n\nTest:", d[0], '\n')

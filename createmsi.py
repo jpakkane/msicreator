@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2017-2018 Jussi Pakkanen et al
+# Copyright 2017-2023 Jussi Pakkanen et al
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -100,27 +100,24 @@ class PackageGenerator:
         self.feature_properties = {}
 
     def generate_files(self):
-        self.root = ET.Element('Wix', {'xmlns': 'http://schemas.microsoft.com/wix/2006/wi'})
-        product = ET.SubElement(self.root, 'Product', {
+        self.root = ET.Element('Wix', {
+            'xmlns': 'http://wixtoolset.org/schemas/v4/wxs',
+            'xmlns:ui': 'http://wixtoolset.org/schemas/v4/wxs/ui'
+        })
+        package = ET.SubElement(self.root, 'Package', {
             'Name': self.product_name,
             'Manufacturer': self.manufacturer,
-            'Id': self.guid,
+            'ProductCode': self.guid,
             'UpgradeCode': self.upgrade_guid,
             'Language': '1033',
             'Codepage':  '1252',
             'Version': self.version,
         })
 
-        package = ET.SubElement(product, 'Package',  {
-            'Id': '*',
+        ET.SubElement(package, 'SummaryInformation',  {
             'Keywords': 'Installer',
             'Description': '%s %s installer' % (self.name, self.version),
-            'Comments': self.comments,
             'Manufacturer': self.manufacturer,
-            'InstallerVersion': '500',
-            'Languages': '1033',
-            'Compressed': 'yes',
-            'SummaryCodepage': '1252',
         })
 
         if self.major_upgrade is not None:
@@ -128,22 +125,16 @@ class PackageGenerator:
             for mkey in self.major_upgrade.keys():
                 majorupgrade.set(mkey, self.major_upgrade[mkey])
         else:
-            ET.SubElement(product, 'MajorUpgrade', {'DowngradeErrorMessage': 'A newer version of %s is already installed.' % self.name})
-        if self.arch == 64:
-            package.set('Platform', 'x64')
-        ET.SubElement(product, 'Media', {
+            ET.SubElement(package, 'MajorUpgrade', {'DowngradeErrorMessage': 'A newer version of %s is already installed.' % self.name})
+        ET.SubElement(package, 'Media', {
             'Id': '1',
             'Cabinet': self.basename + '.cab',
             'EmbedCab': 'yes',
         })
-        targetdir = ET.SubElement(product, 'Directory', {
-            'Id': 'TARGETDIR',
-            'Name': 'SourceDir',
+        targetdir = ET.SubElement(package, 'StandardDirectory', {
+            'Id': 'ProgramFiles64Folder',
         })
-        progfiledir = ET.SubElement(targetdir, 'Directory', {
-            'Id': self.progfile_dir,
-        })
-        pmf = ET.SubElement(targetdir, 'Directory', {'Id': 'ProgramMenuFolder'},)
+        #pmf = ET.SubElement(targetdir, 'Directory', {'Id': 'ProgramMenuFolder'},)
         if self.startmenu_shortcut is not None:
             ET.SubElement(pmf, 'Directory', {
                 'Id': 'ApplicationProgramsFolder',
@@ -153,7 +144,7 @@ class PackageGenerator:
             ET.SubElement(pmf, 'Directory', {'Id': 'DesktopFolder',
                                              'Name': 'Desktop',
             })
-        installdir = ET.SubElement(progfiledir, 'Directory', {
+        installdir = ET.SubElement(targetdir, 'Directory', {
             'Id': 'INSTALLDIR',
             'Name': self.installdir,
         })
@@ -210,13 +201,9 @@ class PackageGenerator:
                                                   'KeyPath': 'yes',
                                                   })
 
-        ET.SubElement(product, 'Property', {
-            'Id': 'WIXUI_INSTALLDIR',
-            'Value': 'INSTALLDIR',
-        })
         if platform.system() == "Windows":
             if self.license_file:
-                ET.SubElement(product, 'UIRef', {
+                ET.SubElement(package, 'ui:WixUI', {
                     'Id': 'WixUI_FeatureTree',
                 })
             else:
@@ -233,7 +220,7 @@ class PackageGenerator:
                 'Value': self.graphics.background,
             })
 
-        top_feature = ET.SubElement(product, 'Feature', {
+        top_feature = ET.SubElement(package, 'Feature', {
             'Id': 'Complete',
             'Title': self.name + ' ' + self.version,
             'Description': 'The complete package',
@@ -270,8 +257,6 @@ class PackageGenerator:
         if self.registry_entries is not None:
             registry_entries_directory = ET.SubElement(product, 'DirectoryRef', {'Id': 'TARGETDIR'})
             registry_entries_component = ET.SubElement(registry_entries_directory, 'Component', {'Id': 'RegistryEntries', 'Guid': gen_guid()})
-            if self.arch == 64:
-                registry_entries_component.set('Win64', 'yes')
             ET.SubElement(top_feature, 'ComponentRef', {'Id': 'RegistryEntries'})
             for r in self.registry_entries:
                 self.create_registry_entries(registry_entries_component, r)
@@ -311,7 +296,7 @@ class PackageGenerator:
                 'Level': '1'
             }
             if feature.get('absent', 'ab') == 'disallow':
-                fdict['Absent'] = 'disallow'
+                fdict['AllowAbsent'] = 'no'
             self.feature_properties[sd] = fdict
 
             self.feature_components[sd] = []
@@ -340,8 +325,6 @@ class PackageGenerator:
                 'Guid': gen_guid(),
             })
             self.feature_components[staging_dir].append(component_id)
-            if self.arch == 64:
-                comp_xml_node.set('Win64', 'yes')
             if platform.system() == "Windows" and self.component_num == 0:
                 ET.SubElement(comp_xml_node, 'Environment', {
                     'Id': 'Environment',
@@ -571,23 +554,18 @@ class PackageGenerator:
         })
 
     def build_package(self):
-        wixdir = 'c:\\Program Files\\Wix Toolset v3.11\\bin'
-        if platform.system() != "Windows":
-            wixdir = '/usr/bin'
-        if not os.path.isdir(wixdir):
-            wixdir = 'c:\\Program Files (x86)\\Wix Toolset v3.11\\bin'
-        if not os.path.isdir(wixdir):
-            print("ERROR: This script requires WIX")
+        if shutil.which('wix') is None:
+            print("ERROR: This script requires WIX 4")
             sys.exit(1)
         if platform.system() == "Windows":
-            subprocess.check_call([os.path.join(wixdir, 'candle'), self.main_xml])
-            subprocess.check_call([os.path.join(wixdir, 'light'),
-                                   '-ext', 'WixUIExtension',
-                                   '-cultures:en-us',
-                                   '-dWixUILicenseRtf=' + self.license_file if self.license_file else '',
-                                   '-dcl:high',
+            subprocess.check_call(['wix',
+                                   'build',
+                                   '-ext', 'WixToolset.UI.wixext',
+                                   #'-cultures:en-us',
+                                   '-bindvariable', 'WixUILicenseRtf=' + self.license_file if self.license_file else '',
+                                   '-arch', 'x64',
                                    '-out', self.final_output,
-                                   self.main_o])
+                                   self.main_xml])
         else:
             subprocess.check_call([os.path.join(wixdir, 'wixl'), '-o', self.final_output, self.main_xml])
 

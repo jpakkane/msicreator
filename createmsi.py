@@ -121,7 +121,7 @@ class PackageGenerator:
         })
 
         if self.major_upgrade is not None:
-            majorupgrade = ET.SubElement(product, 'MajorUpgrade', {})
+            majorupgrade = ET.SubElement(package, 'MajorUpgrade', {})
             for mkey in self.major_upgrade.keys():
                 majorupgrade.set(mkey, self.major_upgrade[mkey])
         else:

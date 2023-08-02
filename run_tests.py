@@ -79,9 +79,9 @@ def install_wix():
 
 if __name__ == '__main__':
     testdirs = [('basictest', 'msidef.json'),
-                #('two_items', 'two.json'),
-                #('msvcrt', 'msvcrt.json'),
-                #('icons', 'icons.json'),
+                ('two_items', 'two.json'),
+                ('msvcrt', 'msvcrt.json'),
+                ('icons', 'icons.json'),
                 #('shortcuts', 'shortcuts.json'),
                 #('registryentries', 'registryentry.json'),
                 #('majorupgrade', 'majorupgrade.json'),

@@ -247,10 +247,10 @@ class PackageGenerator:
             ET.SubElement(top_feature, 'ComponentRef', {'Id': 'ApplicationShortcutDesktop'})
         if self.addremove_icon is not None:
             icoid = 'addremoveicon.ico'
-            ET.SubElement(product, 'Icon', {'Id': icoid,
+            ET.SubElement(package, 'Icon', {'Id': icoid,
                                             'SourceFile': self.addremove_icon,
             })
-            ET.SubElement(product, 'Property', {'Id': 'ARPPRODUCTICON',
+            ET.SubElement(package, 'Property', {'Id': 'ARPPRODUCTICON',
                                                 'Value': icoid,
             })
 

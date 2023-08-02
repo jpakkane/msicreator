@@ -85,8 +85,8 @@ if __name__ == '__main__':
                 ('shortcuts', 'shortcuts.json'),
                 ('registryentries', 'registryentry.json'),
                 ('majorupgrade', 'majorupgrade.json'),
-                #('productguid', 'productguid.json'),
-                #('UIgraphics', 'uigraphics.json'),
+                ('productguid', 'productguid.json'),
+                ('UIgraphics', 'uigraphics.json'),
                 #('withoutlicense', 'withoutlicense.json')
     ]
 

@@ -202,7 +202,7 @@ class PackageGenerator:
                 'Value': self.graphics.banner,
             })
         if self.graphics.background is not None:
-            ET.SubElement(product, 'WixVariable', {
+            ET.SubElement(package, 'WixVariable', {
                 'Id': 'WixUIDialogBmp', 
                 'Value': self.graphics.background,
             })

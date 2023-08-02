@@ -242,7 +242,9 @@ class PackageGenerator:
             })
 
         if self.registry_entries is not None:
-            registry_entries_directory = ET.SubElement(product, 'DirectoryRef', {'Id': 'TARGETDIR'})
+            registry_entries_directory = targetdir = ET.SubElement(package, 'StandardDirectory', {
+                'Id': 'ProgramFiles64Folder',
+            })
             registry_entries_component = ET.SubElement(registry_entries_directory, 'Component', {'Id': 'RegistryEntries', 'Guid': gen_guid()})
             ET.SubElement(top_feature, 'ComponentRef', {'Id': 'RegistryEntries'})
             for r in self.registry_entries:
@@ -259,7 +261,6 @@ class PackageGenerator:
         reg_key = ET.SubElement(comp, 'RegistryKey', {
             'Root': reg['root'],
             'Key': reg['key'],
-            'Action': reg['action'],
         })
         ET.SubElement(reg_key, 'RegistryValue', {
             'Name': reg['name'],

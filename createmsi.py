@@ -134,16 +134,6 @@ class PackageGenerator:
         targetdir = ET.SubElement(package, 'StandardDirectory', {
             'Id': 'ProgramFiles64Folder',
         })
-        #pmf = ET.SubElement(targetdir, 'Directory', {'Id': 'ProgramMenuFolder'},)
-        if self.startmenu_shortcut is not None:
-            ET.SubElement(pmf, 'Directory', {
-                'Id': 'ApplicationProgramsFolder',
-                'Name': self.product_name,
-            })
-        if self.desktop_shortcut is not None:
-            ET.SubElement(pmf, 'Directory', {'Id': 'DesktopFolder',
-                                             'Name': 'Desktop',
-            })
         installdir = ET.SubElement(targetdir, 'Directory', {
             'Id': 'INSTALLDIR',
             'Name': self.installdir,
@@ -157,7 +147,7 @@ class PackageGenerator:
             })
 
         if self.startmenu_shortcut is not None:
-            ap = ET.SubElement(product, 'DirectoryRef', {'Id': 'ApplicationProgramsFolder'})
+            ap = ET.SubElement(package, 'StandardDirectory', {'Id': 'ProgramMenuFolder'})
             comp = ET.SubElement(ap, 'Component', {'Id': 'ApplicationShortcut',
                                                    'Guid': gen_guid(),
                                                    })
@@ -167,10 +157,7 @@ class PackageGenerator:
                                              'Target': '[INSTALLDIR]' + self.startmenu_shortcut,
                                              'WorkingDirectory': 'INSTALLDIR',
             })
-            ET.SubElement(comp, 'RemoveFolder', {'Id': 'RemoveApplicationProgramsFolder',
-                                                 'Directory': 'ApplicationProgramsFolder',
-                                                 'On': 'uninstall',
-                                                 })
+            # Remove code was here, but WiX 4 does not seem to require it.
             ET.SubElement(comp, 'RegistryValue', {'Root': 'HKCU',
                                                   'Key': 'Software\\Microsoft\\' + self.name,
                                                   'Name': 'Installed',
@@ -179,7 +166,7 @@ class PackageGenerator:
                                                   'KeyPath': 'yes',
                                                   })
         if self.desktop_shortcut is not None:
-            desk = ET.SubElement(product, 'DirectoryRef', {'Id': 'DesktopFolder'})
+            desk = ET.SubElement(package, 'StandardDirectory', {'Id': 'DesktopFolder'})
             comp = ET.SubElement(desk, 'Component', {'Id':'ApplicationShortcutDesktop',
                                                      'Guid': gen_guid(),
                                                      })
@@ -210,7 +197,7 @@ class PackageGenerator:
                 self.create_licenseless_dialog_entries(product)
 
         if self.graphics.banner is not None:
-            ET.SubElement(product, 'WixVariable', {
+            ET.SubElement(package, 'WixVariable', {
                 'Id': 'WixUIBannerBmp',
                 'Value': self.graphics.banner,
             })

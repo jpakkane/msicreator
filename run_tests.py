@@ -82,7 +82,7 @@ if __name__ == '__main__':
                 ('two_items', 'two.json'),
                 ('msvcrt', 'msvcrt.json'),
                 ('icons', 'icons.json'),
-                #('shortcuts', 'shortcuts.json'),
+                ('shortcuts', 'shortcuts.json'),
                 #('registryentries', 'registryentry.json'),
                 #('majorupgrade', 'majorupgrade.json'),
                 #('productguid', 'productguid.json'),

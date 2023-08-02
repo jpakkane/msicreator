@@ -545,17 +545,17 @@ class PackageGenerator:
         if shutil.which('wix') is None:
             print("ERROR: This script requires WIX 4")
             sys.exit(1)
-        if platform.system() == "Windows":
-            subprocess.check_call(['wix',
-                                   'build',
-                                   '-ext', 'WixToolset.UI.wixext',
-                                   #'-cultures:en-us',
-                                   '-bindvariable', 'WixUILicenseRtf=' + self.license_file if self.license_file else '',
-                                   '-arch', 'x64',
-                                   '-out', self.final_output,
-                                   self.main_xml])
-        else:
-            subprocess.check_call([os.path.join(wixdir, 'wixl'), '-o', self.final_output, self.main_xml])
+        cmd_arr = ['wix',
+                   'build',
+                   '-ext', 'WixToolset.UI.wixext',
+                   #'-cultures:en-us',
+                   ]
+        if self.license_file:
+            cmd_arr += ['-bindvariable', 'WixUILicenseRtf=' + self.license_file]
+        cmd_arr += ['-arch', 'x64',
+                    '-out', self.final_output,
+                    self.main_xml]
+        subprocess.check_call(cmd_arr)
 
 def run(args):
     if len(args) != 1:

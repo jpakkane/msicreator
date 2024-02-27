@@ -194,7 +194,7 @@ class PackageGenerator:
                     'Id': 'WixUI_FeatureTree',
                 })
             else:
-                self.create_licenseless_dialog_entries(product)
+                self.create_licenseless_dialog_entries(package)
 
         if self.graphics.banner is not None:
             ET.SubElement(package, 'WixVariable', {

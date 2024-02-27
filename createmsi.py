@@ -252,16 +252,13 @@ class PackageGenerator:
                 self.create_registry_entries(registry_entries_component, r)
 
         if self.custom_actions is not None:
-            install_execute_sequence = ET.SubElement(product, 'InstallExecuteSequence')
-            ET.SubElement(install_execute_sequence, 'RemoveExistingProducts', {
-                'After': 'InstallFinalize'
-            })
-            ET.SubElement(product, 'Property', {
+            install_execute_sequence = ET.SubElement(package, 'InstallExecuteSequence')
+            ET.SubElement(package, 'Property', {
                 'Id': 'cmd',
                 'Value': 'cmd.exe'
             })
             for f in self.custom_actions:
-                self.create_custom_actions(product, install_execute_sequence, f)
+                self.create_custom_actions(package, install_execute_sequence, f)
 
         ET.ElementTree(self.root).write(self.main_xml, encoding='utf-8', xml_declaration=True)
         # ElementTree can not do prettyprinting so do it manually

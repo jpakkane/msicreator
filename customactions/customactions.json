@@ -11,11 +11,19 @@
     "custom_actions": [
         {
          "id": "ActionIdentifier",
-         "exe_command": "/c \"[INSTALLDIR]prog.bat\"",
+         "exe_command": "cmd.exe /c \"[INSTALLDIR]prog.bat\"",
          "execute": "deferred",
          "return": "ignore",
          "impersonate": "no",
          "after": "InstallFiles"
+        },
+        {
+         "id": "Action2Identifier",
+         "exe_command": "[INSTALLDIR]gui.exe",
+         "execute": "deferred",
+         "return": "ignore",
+         "impersonate": "no",
+         "after": "ActionIdentifier"
         }
     ],
     "parts": [
@@ -25,6 +33,13 @@
          "description": "This does nothing",
          "absent": "disallow",
          "staged_dir": "main"
+        },
+        {
+         "id": "GuiProgram",
+         "title": "The GUI parts",
+         "description": "This does nothing",
+         "absent": "disallow",
+         "staged_dir": "gui"
         }
     ]
 }

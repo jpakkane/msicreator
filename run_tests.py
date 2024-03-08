@@ -56,9 +56,25 @@ def build_iconexe():
                            ],
                           cwd='shortcuts')
 
+def build_guiexe():
+    staging_dir = 'customactions/gui'
+    if not os.path.exists(staging_dir):
+        os.mkdir(staging_dir)
+    subprocess.check_call(['cl',
+                           '/nologo',
+                           '/O2',
+                           '/MT',
+                           'prog.c',
+                           '/link',
+                           '/SUBSYSTEM:WINDOWS',
+                           '/OUT:gui/gui.exe'
+                           ],
+                           cwd="customactions")
+
 def build_binaries():
     build_msvcrt()
     build_iconexe()
+    build_guiexe()
 
 def install_wix():
     subprocess.check_call(['dotnet',

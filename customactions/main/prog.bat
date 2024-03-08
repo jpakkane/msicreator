@@ -1,4 +1,4 @@
 @echo off
-(echo ECHO I DO NOTHING AT ALL) > "C:\Program Files\customactions\test.txt"
+(echo ECHO I DO NOTHING AT ALL) > "%PROGRAMFILES%\customactions\test.txt"
 exit
 
